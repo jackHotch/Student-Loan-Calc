@@ -16,45 +16,22 @@ export class WebhookController {
   ) {
     // Verify webhook signature
     const webhook = new Webhook(process.env.CLERK_WEBHOOK_SECRET!);
-    
+
     try {
       const event = webhook.verify(JSON.stringify(payload), {
         'svix-id': svixId,
         'svix-timestamp': svixTimestamp,
         'svix-signature': svixSignature,
-      }) as any
+      }) as any;
 
       switch (event.type) {
         case 'user.updated':
-          await this.usersService.updateUser(event.data.first_name)
+          await this.usersService.updateUser(event.data);
         case 'user.created':
-          await this.usersService.createUser(event.data)
+          await this.usersService.createUser(event.data);
+        case 'user.deleted':
+          await this.usersService.deleteUser(event.data);
       }
-      // Handle different event types
-      // switch (event.type) {
-      //   case 'user.created':
-      //     await this.usersService.createUser({
-      //       id: event.data.id,
-      //       email: event.data.email_addresses[0].email_address,
-      //       first_name: event.data.first_name,
-      //       last_name: event.data.last_name,
-      //       image_url: event.data.image_url,
-      //     });
-      //     break;
-        
-      //   case 'user.updated':
-      //     await this.usersService.updateUser(event.data.id, {
-      //       email: event.data.email_addresses[0].email_address,
-      //       first_name: event.data.first_name,
-      //       last_name: event.data.last_name,
-      //       image_url: event.data.image_url,
-      //     });
-      //     break;
-        
-      //   case 'user.deleted':
-      //     await this.usersService.deleteUser(event.data.id);
-      //     break;
-      // }
 
       return { success: true };
     } catch (err) {
