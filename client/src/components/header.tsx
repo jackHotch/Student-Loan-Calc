@@ -1,5 +1,6 @@
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { Calculator } from 'lucide-react'
+import { ModeToggle } from './ui/mode-toggle'
 
 export const Header = () => {
   return (
@@ -8,7 +9,8 @@ export const Header = () => {
         <div className='flex items-center gap-2'>
           <Calculator className='text-primary-500' size={32} />
         </div>
-        <div className='flex gap-8'>
+        <div className='flex items-center justify-center gap-8'>
+          <ModeToggle />
           <SignedOut>
             <SignInButton>
               <button className='cursor-pointer bg-transparent dark:text-white'>Sign in</button>

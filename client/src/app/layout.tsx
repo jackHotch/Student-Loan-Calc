@@ -1,8 +1,12 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
-import { Manrope } from 'next/font/google'
+import { Manrope, Figtree } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/header'
+import { cn } from '@/lib/utils'
+import { ThemeProvider } from '@/providers/theme-provider'
+
+const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' })
 
 const manrope = Manrope({
   subsets: ['latin'],
@@ -20,10 +24,12 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang='en' className={manrope.className}>
+      <html lang='en' className={cn(manrope.className, figtree.variable)} suppressHydrationWarning>
         <body>
-          <Header />
-          {children}
+          <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+            <Header />
+            {children}
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
