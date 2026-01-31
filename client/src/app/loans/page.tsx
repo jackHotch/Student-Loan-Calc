@@ -11,6 +11,9 @@ export default function Loans() {
       remaining_principal: '12,423.09',
       accrued_interest: '2,287.45',
       payoff_date: '12/6/2035',
+      minimum_payment: '193.23',
+      extra_payment: '200',
+      start_date: '12/6/2025',
     },
     {
       name: 'Loan2',
@@ -21,6 +24,9 @@ export default function Loans() {
       remaining_principal: '6,433.09',
       accrued_interest: '2,098.45',
       payoff_date: '12/6/2037',
+      minimum_payment: '65.72',
+      extra_payment: '0',
+      start_date: '12/25/2025',
     },
     {
       name: 'Loan3',
@@ -31,6 +37,9 @@ export default function Loans() {
       remaining_principal: '9,773.09',
       accrued_interest: '1,386.45',
       payoff_date: '12/6/2040',
+      minimum_payment: '198.02',
+      extra_payment: '50',
+      start_date: '12/6/2025',
     },
   ]
   return <LoanTable data={data} />
