@@ -11,12 +11,20 @@ import {
   DrawerFooter,
   DrawerClose,
 } from './ui/drawer'
-import { loanTableSchema } from '@/constants/scheme'
+import { loanTableSchema } from '@/constants/schema'
 import { z } from 'zod'
 import { ReactNode, useState } from 'react'
 
-export function TableCellViewer({ data, children }: { data?: z.infer<typeof loanTableSchema>; children: ReactNode }) {
-  const description = data
+export function TableCellViewer({
+  data,
+  isNewLoan = false,
+  children,
+}: {
+  data?: z.infer<typeof loanTableSchema>
+  isNewLoan?: boolean
+  children: ReactNode
+}) {
+  const description = isNewLoan
     ? 'Edit loan details and payment information'
     : 'Enter new loan details and payment information'
 
@@ -30,6 +38,9 @@ export function TableCellViewer({ data, children }: { data?: z.infer<typeof loan
       remaining_principal: '',
       accrued_interest: '',
       payoff_date: '',
+      minimum_payment: '',
+      extra_payment: '',
+      start_date: '',
     },
   )
 
@@ -45,21 +56,21 @@ export function TableCellViewer({ data, children }: { data?: z.infer<typeof loan
           <form className='flex flex-col gap-4'>
             <div className='flex flex-col gap-3'>
               <Label htmlFor='name'>Loan Name</Label>
-              <Input id='name' defaultValue={loanData.name} />
-            </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='flex flex-col gap-3'>
-                <Label htmlFor='current_balance'>Current Balance</Label>
-                <Input id='current_balance' defaultValue={loanData.current_balance} />
-              </div>
-              <div className='flex flex-col gap-3'>
-                <Label htmlFor='interest_rate'>Interest Rate</Label>
-                <Input id='interest_rate' defaultValue={loanData.interest_rate} />
-              </div>
+              <Input id='name' defaultValue={loanData.name} placeholder='ex: Auto Loan' />
             </div>
             <div className='flex flex-col gap-3'>
               <Label htmlFor='lender'>Lender</Label>
-              <Input id='lender' defaultValue={loanData.lender} />
+              <Input id='lender' defaultValue={loanData.lender} placeholder='ex: Sallie Mae' />
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='flex flex-col gap-3'>
+                <Label htmlFor='start_date'>Start Date</Label>
+                <Input id='start_date' type='date' defaultValue={loanData.start_date} />
+              </div>
+              <div className='flex flex-col gap-3'>
+                <Label htmlFor='payoff_date'>Payoff Date</Label>
+                <Input id='payoff_date' type='date' defaultValue={loanData.payoff_date} />
+              </div>
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div className='flex flex-col gap-3'>
@@ -77,14 +88,24 @@ export function TableCellViewer({ data, children }: { data?: z.infer<typeof loan
                 <Input id='accrued_interest' defaultValue={loanData.accrued_interest} />
               </div>
               <div className='flex flex-col gap-3'>
-                <Label htmlFor='payoff_date'>Payoff Date</Label>
-                <Input id='payoff_date' defaultValue={loanData.payoff_date} />
+                <Label htmlFor='interest_rate'>Interest Rate</Label>
+                <Input id='interest_rate' defaultValue={loanData.interest_rate} placeholder='%' />
+              </div>
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='flex flex-col gap-3'>
+                <Label htmlFor='minimum_payment'>Minimum Payment</Label>
+                <Input id='minimum_payment' defaultValue={loanData.minimum_payment} />
+              </div>
+              <div className='flex flex-col gap-3'>
+                <Label htmlFor='extra_payment'>Extra Payment</Label>
+                <Input id='extra_payment' defaultValue={loanData.extra_payment} placeholder='Optional' />
               </div>
             </div>
           </form>
         </div>
         <DrawerFooter>
-          <Button>Save Changes</Button>
+          <Button>{isNewLoan ? 'Add Loan' : 'Save Changes'}</Button>
           <DrawerClose asChild>
             <Button variant='outline'>Cancel</Button>
           </DrawerClose>

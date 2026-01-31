@@ -15,7 +15,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table'
 import { z } from 'zod'
-import { loanTableSchema } from '@/constants/scheme'
+import { loanTableSchema } from '@/constants/schema'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -73,13 +73,13 @@ const columns: ColumnDef<z.infer<typeof loanTableSchema>>[] = [
   },
   {
     accessorKey: 'current_balance',
-    header: () => <div className='text-right'>Current Balance</div>,
-    cell: ({ row }) => <div className='text-right font-medium'>${row.original.current_balance}</div>,
+    header: () => <div>Current Balance</div>,
+    cell: ({ row }) => <div className='text font-medium'>${row.original.current_balance}</div>,
   },
   {
     accessorKey: 'interest_rate',
-    header: () => <div className='text-right'>Interest Rate</div>,
-    cell: ({ row }) => <div className='text-right'>{row.original.interest_rate}</div>,
+    header: () => <div>Interest Rate</div>,
+    cell: ({ row }) => <div>{row.original.interest_rate}</div>,
   },
   {
     accessorKey: 'lender',
@@ -88,18 +88,33 @@ const columns: ColumnDef<z.infer<typeof loanTableSchema>>[] = [
   },
   {
     accessorKey: 'starting_principal',
-    header: () => <div className='text-right'>Starting Principal</div>,
-    cell: ({ row }) => <div className='text-right'>${row.original.starting_principal}</div>,
+    header: () => <div>Starting Principal</div>,
+    cell: ({ row }) => <div>${row.original.starting_principal}</div>,
   },
   {
     accessorKey: 'remaining_principal',
-    header: () => <div className='text-right'>Remaining Principal</div>,
-    cell: ({ row }) => <div className='text-right'>${row.original.remaining_principal}</div>,
+    header: () => <div>Remaining Principal</div>,
+    cell: ({ row }) => <div>${row.original.remaining_principal}</div>,
   },
   {
     accessorKey: 'accrued_interest',
-    header: () => <div className='text-right'>Accrued Interest</div>,
-    cell: ({ row }) => <div className='text-right'>${row.original.accrued_interest}</div>,
+    header: () => <div>Accrued Interest</div>,
+    cell: ({ row }) => <div>${row.original.accrued_interest}</div>,
+  },
+  {
+    accessorKey: 'minimun_payment',
+    header: () => <div>Minimum Payment</div>,
+    cell: ({ row }) => <div>${row.original.minimum_payment}</div>,
+  },
+  {
+    accessorKey: 'extra_payment',
+    header: () => <div>Extra Payment</div>,
+    cell: ({ row }) => <div>${row.original.extra_payment}</div>,
+  },
+  {
+    accessorKey: 'start_date',
+    header: 'Start Date',
+    cell: ({ row }) => <div>{row.original.start_date}</div>,
   },
   {
     accessorKey: 'payoff_date',
@@ -159,7 +174,7 @@ export function LoanTable({ data: initialData }: { data: z.infer<typeof loanTabl
   })
 
   return (
-    <div className='w-full flex-col justify-start gap-6'>
+    <div className='flex flex-col'>
       <div className='flex items-center justify-between px-4 pb-4 pt-4 lg:px-6'>
         <h2 className='text-2xl font-bold'>
           <span className='text-primary'>My</span> Loans
@@ -192,7 +207,7 @@ export function LoanTable({ data: initialData }: { data: z.infer<typeof loanTabl
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <TableCellViewer>
+          <TableCellViewer isNewLoan>
             <Button size='sm'>
               <Plus />
               <span className='hidden lg:inline'>Add Loan</span>
@@ -200,8 +215,8 @@ export function LoanTable({ data: initialData }: { data: z.infer<typeof loanTabl
           </TableCellViewer>
         </div>
       </div>
-      <div className='relative flex flex-col gap-4 overflow-auto px-4 lg:px-6'>
-        <div className='overflow-hidden rounded-lg border'>
+      <div className='relative flex flex-col gap-4 px-4 lg:px-6'>
+        <div className='overflow-x-hidden rounded-lg border'>
           <Table>
             <TableHeader className='bg-muted sticky top-0 z-10'>
               {table.getHeaderGroups().map((headerGroup) => (

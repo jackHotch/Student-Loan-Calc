@@ -9,4 +9,7 @@ export const loanTableSchema = z.object({
   remaining_principal: z.string(),
   accrued_interest: z.string(),
   payoff_date: z.string(),
+  minimum_payment: z.string(),
+  extra_payment: z.string(),
+  start_date: z.string(),
 })
