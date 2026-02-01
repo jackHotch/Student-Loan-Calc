@@ -14,6 +14,7 @@ import {
 import { loanTableSchema } from '@/constants/schema'
 import { z } from 'zod'
 import { ReactNode, useState } from 'react'
+import { DatePicker } from './date-picker'
 
 export function TableCellViewer({
   data,
@@ -24,6 +25,9 @@ export function TableCellViewer({
   isNewLoan?: boolean
   children: ReactNode
 }) {
+  const [startDate, setStartDate] = useState<Date | undefined>()
+  const [payoffDate, setPayoffDate] = useState<Date | undefined>()
+
   const description = isNewLoan
     ? 'Edit loan details and payment information'
     : 'Enter new loan details and payment information'
@@ -65,11 +69,11 @@ export function TableCellViewer({
             <div className='grid grid-cols-2 gap-4'>
               <div className='flex flex-col gap-3'>
                 <Label htmlFor='start_date'>Start Date</Label>
-                <Input id='start_date' type='date' defaultValue={loanData.start_date} />
+                <DatePicker value={startDate} onChange={setStartDate} />
               </div>
               <div className='flex flex-col gap-3'>
                 <Label htmlFor='payoff_date'>Payoff Date</Label>
-                <Input id='payoff_date' type='date' defaultValue={loanData.payoff_date} />
+                <DatePicker value={payoffDate} onChange={setPayoffDate} />
               </div>
             </div>
             <div className='grid grid-cols-2 gap-4'>
