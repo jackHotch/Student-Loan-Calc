@@ -37,7 +37,7 @@ export function dbToTable(loan: LoanDb): LoanTable {
 }
 
 export function formatCurrency(amount: number) {
-  if (amount) {
+  if (amount || amount == 0) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
