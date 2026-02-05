@@ -15,23 +15,21 @@ export const loanDbSchema = z.object({
   payoff_date: z.date(),
 })
 
-// UI/Table schema - formatted strings for display
 export const loanTableSchema = z.object({
   id: z.string(),
   name: z.string(),
-  current_balance: z.string(), // "13,053.23"
-  interest_rate: z.string(), // "10.5%"
+  current_balance: z.string(),
+  interest_rate: z.string(),
   lender: z.string(),
-  starting_principal: z.string(), // "15,000"
-  remaining_principal: z.string(), // "12,423.09"
-  accrued_interest: z.string(), // "2,287.45"
-  minimum_payment: z.string(), // "193.23"
-  extra_payment: z.string(), // "200"
-  start_date: z.string(), // "12/6/2025"
-  payoff_date: z.string(), // "12/6/2035"
+  starting_principal: z.string(),
+  remaining_principal: z.string(),
+  accrued_interest: z.string(),
+  minimum_payment: z.string(),
+  extra_payment: z.string(),
+  start_date: z.string(),
+  payoff_date: z.string(),
 })
 
-// Form schema - for creating/editing (raw numbers)
 export const loanFormSchema = z.object({
   id: z.string(),
   name: z.string().min(1, 'Loan name is required'),
