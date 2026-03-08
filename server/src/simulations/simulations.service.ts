@@ -395,15 +395,67 @@ export class SimulationsService {
           .plus(loan.total_paid)
           .toDecimalPlaces(2)
           .toNumber(),
-        last_payoff_date:
-          !acc.last_payoff_date || loan.payoff_date > acc.last_payoff_date
+        payoff_date:
+          !acc.payoff_date || loan.payoff_date > acc.payoff_date
             ? loan.payoff_date
-            : acc.last_payoff_date,
+            : acc.payoff_date,
       }),
-      { total_interest_paid: 0, total_paid: 0, last_payoff_date: null },
+      { total_interest_paid: 0, total_paid: 0, payoff_date: null },
     );
 
     return { perLoan, totals };
+  }
+
+  async getSimulationComparison(userId: BigInt, simulationId: BigInt) {
+    const simulation = await this.getSimulationSummary(userId, simulationId);
+    const loanIds = simulation.perLoan.map((l) => l.loan_id);
+    const baseline = await this.loanService.getBaselineSummary(userId, loanIds);
+
+    return {
+      simulation: {
+        ...simulation.totals,
+        months_until_payoff: this.monthsUntilPayoff(
+          simulation.totals.payoff_date,
+        ),
+      },
+      baseline: {
+        ...baseline.totals,
+        months_until_payoff: this.monthsUntilPayoff(
+          baseline.totals.payoff_date,
+        ),
+      },
+      savings: {
+        interest_saved: new Decimal(baseline.totals.total_interest_paid)
+          .minus(simulation.totals.total_interest_paid)
+          .toDecimalPlaces(2)
+          .toNumber(),
+        total_saved: new Decimal(baseline.totals.total_paid)
+          .minus(simulation.totals.total_paid)
+          .toDecimalPlaces(2)
+          .toNumber(),
+        months_saved: this.monthsBetween(
+          simulation.totals.payoff_date,
+          baseline.totals.payoff_date,
+        ),
+      },
+    };
+  }
+
+  monthsBetween(dateA: Date, dateB: Date) {
+    const a = new Date(dateA);
+    const b = new Date(dateB);
+    return (
+      (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth())
+    );
+  }
+
+  monthsUntilPayoff(payoffDate: Date): number {
+    const today = new Date();
+    const end = new Date(payoffDate);
+    return (
+      (end.getFullYear() - today.getFullYear()) * 12 +
+      (end.getMonth() - today.getMonth())
+    );
   }
 
   remove(id: number) {

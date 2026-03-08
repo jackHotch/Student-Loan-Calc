@@ -28,6 +28,14 @@ export class SimulationsController {
     return this.simulationsService.findAll();
   }
 
+  @Get('/comparison/:id')
+  comparison(@User() userId: BigInt, @Param('id') simulationId: string) {
+    return this.simulationsService.getSimulationComparison(
+      userId,
+      BigInt(simulationId),
+    );
+  }
+
   @Get(':id')
   findOne(@User() userId: BigInt, @Param('id') id: string) {
     return this.simulationsService.findOne(userId, BigInt(id));
