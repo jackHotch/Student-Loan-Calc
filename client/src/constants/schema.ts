@@ -70,8 +70,49 @@ export const createSimulationSchema = z.object({
   loan_ids: z.array(z.number()).nonempty(),
 })
 
+export const paymentScheduleSchema = z.object({
+  id: z.number(),
+  simulation_loan_id: z.number(),
+  payment_number: z.number(),
+  principal_paid: z.number(),
+  interest_paid: z.number(),
+  loan_id: z.number().nullable(),
+  extra_payment: z.number(),
+  remaining_principal: z.number(),
+  payment_date: z.string(),
+  is_actual: z.boolean(),
+  total_payment: z.number(),
+})
+
+export const simulationLoanSchema = z.object({
+  id: z.number(),
+  loan_id: z.number(),
+  payoff_order: z.number(),
+  payment_schedule: z.array(paymentScheduleSchema),
+})
+
+export const simulationSchema = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  strategy_type: z.enum([
+    StrategyType.AVALANCHE,
+    StrategyType.SNOWBALL,
+    StrategyType.AVALANCHE_INTEREST_FOCUSED,
+    StrategyType.SNOWBALL_INTEREST_FOCUSED,
+  ]),
+  created_at: z.string(),
+  cascade: z.boolean(),
+  extra_payment: z.string(),
+  loans: z.array(simulationLoanSchema),
+})
+
 export type LoanDb = z.infer<typeof loanDbSchema>
 export type LoanTable = z.infer<typeof loanTableSchema>
 export type LoanForm = z.infer<typeof loanFormSchema>
 export type CreateSimulationInput = z.infer<typeof createSimulationSchema>
 export type StrategyType = (typeof StrategyType)[keyof typeof StrategyType]
+export type Simulation = z.infer<typeof simulationSchema>
+export type SimulationLoan = z.infer<typeof simulationLoanSchema>
+export type PaymentSchedule = z.infer<typeof paymentScheduleSchema>
