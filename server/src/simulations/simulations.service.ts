@@ -28,7 +28,13 @@ export class SimulationsService {
       simulation.cascade,
     );
 
-    return await this.saveSimulation(userId, simulation, calculatedSimulation);
+    const savedSimulation = await this.saveSimulation(
+      userId,
+      simulation,
+      calculatedSimulation,
+    );
+
+    return this.getSimulationComparison(userId, savedSimulation.id);
   }
 
   async runSimulation(
@@ -194,7 +200,6 @@ export class SimulationsService {
     );
 
     const createdSimulationPaymentSchedules: any = [];
-    // console.log(calculatedSimulation[0]);
 
     for (const loan of calculatedSimulation) {
       const simulationLoan = createdSimulationLoans.find(
@@ -306,7 +311,7 @@ export class SimulationsService {
       });
     }
 
-    return this.findOne(userId, simulationId);
+    return this.getSimulationComparison(userId, current.id);
   }
 
   sameArrays(a: number[] | BigInt[], b: number[] | BigInt[]) {
@@ -427,10 +432,6 @@ export class SimulationsService {
       savings: {
         interest_saved: new Decimal(baseline.totals.total_interest_paid)
           .minus(simulation.totals.total_interest_paid)
-          .toDecimalPlaces(2)
-          .toNumber(),
-        total_saved: new Decimal(baseline.totals.total_paid)
-          .minus(simulation.totals.total_paid)
           .toDecimalPlaces(2)
           .toNumber(),
         months_saved: this.monthsBetween(
