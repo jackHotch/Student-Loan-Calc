@@ -209,12 +209,12 @@ export class LoansService {
           .plus(loan.total_paid)
           .toDecimalPlaces(2)
           .toNumber(),
-        last_payoff_date:
-          !acc.last_payoff_date || loan.payoff_date > acc.last_payoff_date
+        payoff_date:
+          !acc.payoff_date || loan.payoff_date > acc.payoff_date
             ? loan.payoff_date
-            : acc.last_payoff_date,
+            : acc.payoff_date,
       }),
-      { total_interest_paid: 0, total_paid: 0, last_payoff_date: null },
+      { total_interest_paid: 0, total_paid: 0, payoff_date: null },
     );
 
     return { perLoan, totals: totalsRollup };
