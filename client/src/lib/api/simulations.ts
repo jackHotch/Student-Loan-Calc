@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxios } from './useAxios'
 import { ApiError } from './axios'
-import { CreateSimulationInput } from '@/constants/schema'
+import { CreateSimulationInput, Simulation, SimulationLoan } from '@/constants/schema'
 import { SimulationResult } from '@/constants/types'
 
 export const useCreateSimulation = () => {
@@ -16,5 +16,31 @@ export const useCreateSimulation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['simulations'] })
     },
+  })
+}
+
+export const useSimulation = (id) => {
+  const axios = useAxios()
+
+  return useQuery<Simulation, ApiError>({
+    queryKey: ['simulations', id],
+    queryFn: async () => {
+      const response = await axios.get<Simulation>(`/simulations/${id}`)
+      return response.data
+    },
+    enabled: !!id,
+  })
+}
+
+export const useSimulationComparison = (id) => {
+  const axios = useAxios()
+
+  return useQuery<SimulationResult, ApiError>({
+    queryKey: ['simulations', 'comparison', id],
+    queryFn: async () => {
+      const response = await axios.get<SimulationResult>(`/simulations/comparison/${id}`)
+      return response.data
+    },
+    enabled: !!id,
   })
 }

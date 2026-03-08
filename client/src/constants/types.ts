@@ -6,6 +6,7 @@ export type SimulationSummary = {
 }
 
 export type SimulationResult = {
+  simulation_id: number
   simulation: SimulationSummary
   baseline: SimulationSummary
   savings: {

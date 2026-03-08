@@ -6,24 +6,50 @@ import { Textarea } from '@/components/ui/textarea'
 import { useLoans } from '@/lib/api/loans'
 import { formatCurrency } from '@/lib/utils'
 import { payoffStrategies } from '@/constants/constants'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
-import { useCreateSimulation } from '@/lib/api/simulations'
+import { useCreateSimulation, useSimulation, useSimulationComparison } from '@/lib/api/simulations'
 import { StrategyType } from '@/constants/schema'
 import { SimulationResult } from '@/constants/types'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 
 function Create() {
+  const router = useRouter()
+  const pathname = usePathname()
   const { data: loans } = useLoans()
   const createSimulation = useCreateSimulation()
-  const [currentSimulation, setCurrentSimulation] = useState<SimulationResult>()
+  const searchParams = useSearchParams()
+  const simulationId = searchParams.get('id')
+  const { data: existingSimulation } = useSimulation(simulationId)
+  const { data: simulationComparison, isLoading } = useSimulationComparison(simulationId)
+
+  const [currentSimulationComparison, setCurrentSimulationComparison] = useState<SimulationResult>()
   const [name, setName] = useState<string>('')
   const [description, setDescription] = useState<string>('')
   const [selectedLoans, setSelectedLoans] = useState<Set<bigint>>(new Set(loans?.map((l) => l.id)))
   const [strategyType, setStrategyType] = useState<StrategyType>(StrategyType.AVALANCHE)
   const [extraPayment, setExtraPayment] = useState<number>(100)
   const [cascade, setCascade] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (loans && existingSimulation && simulationComparison) {
+      setName(existingSimulation.name)
+      setDescription(existingSimulation.description)
+      setStrategyType(existingSimulation.strategy_type)
+      setExtraPayment(Number(existingSimulation.extra_payment))
+      setCascade(existingSimulation.cascade)
+      setSelectedLoans(new Set(existingSimulation.loans.map((l) => BigInt(l.loan_id))))
+      setCurrentSimulationComparison(simulationComparison)
+    }
+  }, [existingSimulation, simulationComparison, loans])
+
+  function setSimulationId(id: number) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('id', String(id))
+    router.replace(`${pathname}?${params.toString()}`)
+  }
 
   function toggleSelected(id: bigint) {
     setSelectedLoans((prev) => {
@@ -38,19 +64,24 @@ function Create() {
   }
 
   async function handleRunSimulation() {
-    const simulation: SimulationResult = await createSimulation.mutateAsync({
-      name,
-      description,
-      strategy_type: strategyType,
-      extra_payment: extraPayment,
-      cascade,
-      loan_ids: Array.from(selectedLoans).map(Number),
-    })
+    let simulation: SimulationResult
+    if (simulationId) {
+    } else {
+      simulation = await createSimulation.mutateAsync({
+        name,
+        description,
+        strategy_type: strategyType,
+        extra_payment: extraPayment,
+        cascade,
+        loan_ids: Array.from(selectedLoans).map(Number),
+      })
+    }
 
-    setCurrentSimulation(simulation)
+    setCurrentSimulationComparison(simulation)
+    setSimulationId(simulation.simulation_id)
   }
 
-  const selected = loans?.filter((l) => selectedLoans.has(l.id))
+  const selected = loans?.filter((l) => selectedLoans.has(BigInt(l.id)))
   const totalBalance = selected?.reduce((s, l) => s + Number(l.current_principal), 0)
   const totalMinPayment = selected?.reduce((s, l) => s + Number(l.minimum_payment), 0)
   const payoffOrder = strategyType.includes('Interest')
@@ -60,6 +91,10 @@ function Create() {
     : strategyType.includes('Avalanche')
       ? selected?.sort((a, b) => b.current_principal - a.current_principal)
       : selected?.sort((a, b) => a.current_principal - b.current_principal)
+
+  if (isLoading) {
+    return <p>loading...</p>
+  }
 
   return (
     <div className='grid g-0 grid-cols-[1fr_380px] lg:grid-cols-[1fr_400px] h-min-[calc(100vh - 40px)'>
@@ -100,7 +135,7 @@ function Create() {
           <h2 className='font-display text-2xl mb-4'>Select loans to include</h2>
 
           {loans?.map((loan, key) => {
-            const isSelected = selectedLoans.has(loan.id)
+            const isSelected = selectedLoans.has(BigInt(loan.id))
             const containerSelectedStyles = isSelected ? 'border-primary/35 bg-primary/2' : 'hover:bg-secondary/60'
             const checkSelectedStyles = isSelected ? 'bg-primary' : ''
             const interestRateColor =
@@ -113,7 +148,7 @@ function Create() {
               <div
                 key={key}
                 className={`${containerSelectedStyles} card cursor-pointer justify-between gap-4`}
-                onClick={() => toggleSelected(loan.id)}
+                onClick={() => toggleSelected(BigInt(loan.id))}
               >
                 <div
                   className={`${checkSelectedStyles} text-black border w-5 h-5 flex items-center justify-center text-xs`}
@@ -245,7 +280,17 @@ function Create() {
       </div>
 
       <div className='p-8 flex flex-col'>
-        {currentSimulation && <div>{currentSimulation.simulation.months_until_payoff}</div>}
+        {currentSimulationComparison && (
+          <div>
+            <p className='text-label text-primary/35'>Projected Savings</p>
+            <p className='font-display text-3xl font-bold text-primary'>
+              {formatCurrency(currentSimulationComparison?.savings?.interest_saved)}
+            </p>
+            <p className='text-description'>
+              in interest over {currentSimulationComparison?.savings?.months_saved} fewer months
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
