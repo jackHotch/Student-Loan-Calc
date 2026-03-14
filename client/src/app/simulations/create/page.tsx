@@ -38,18 +38,7 @@ function Create() {
 
   useEffect(() => {
     if (loans && existingSimulation && simulationComparison) {
-      setName(existingSimulation.name)
-      setDescription(existingSimulation.description)
-      setStrategyType(existingSimulation.strategy_type)
-      setExtraPayments(
-        existingSimulation.extra_payments.map((ep) => ({
-          ...ep,
-          start_date: new Date(ep.start_date),
-        })),
-      )
-      setCascade(existingSimulation.cascade)
-      setSelectedLoans(new Set(existingSimulation.loans.map((l) => BigInt(l.loan_id))))
-      setCurrentSimulationComparison(simulationComparison)
+      setSimulationToDefault()
     }
   }, [existingSimulation, simulationComparison, loans])
 
@@ -64,6 +53,21 @@ function Create() {
         existingSimulation.loans.map((l) => l.loan_id),
       )
     : false
+
+  function setSimulationToDefault() {
+    setName(existingSimulation.name)
+    setDescription(existingSimulation.description)
+    setStrategyType(existingSimulation.strategy_type)
+    setExtraPayments(
+      existingSimulation.extra_payments.map((ep) => ({
+        ...ep,
+        start_date: new Date(ep.start_date),
+      })),
+    )
+    setCascade(existingSimulation.cascade)
+    setSelectedLoans(new Set(existingSimulation.loans.map((l) => BigInt(l.loan_id))))
+    setCurrentSimulationComparison(simulationComparison)
+  }
 
   function sameArrays(a: number[], b: number[]) {
     return a.length === b.length && [...a].sort().every((v, i) => v === [...b].sort()[i])
@@ -458,7 +462,14 @@ function Create() {
             </div>
           </div>
         ) : (
-          <p className='text-description'>Run the simulation to see the results...</p>
+          <div className='flex flex-col gap-2'>
+            <p className='text-description'>Run the simulation to see the results...</p>
+            {simulationId ? (
+              <Button variant='secondary' onClick={setSimulationToDefault}>
+                Discard Current Changes
+              </Button>
+            ) : null}
+          </div>
         )}
       </div>
     </div>
