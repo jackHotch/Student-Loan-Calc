@@ -1,12 +1,14 @@
 'use client'
 
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
-import { Calculator } from 'lucide-react'
+import { Calculator, User } from 'lucide-react'
 import { ModeToggle } from './mode-toggle'
 import { Button } from '../ui/button'
 import { usePathname } from 'next/navigation'
+import { useClerk } from '@clerk/nextjs'
 
 export const Header = () => {
+  const { openUserProfile } = useClerk()
   const pathname = usePathname()
 
   if (pathname != '/') return null
@@ -28,7 +30,7 @@ export const Header = () => {
             </SignUpButton>
           </SignedOut>
           <SignedIn>
-            <UserButton />
+            <User onClick={() => openUserProfile()} className='cursor-pointer' />
           </SignedIn>
         </div>
       </header>
