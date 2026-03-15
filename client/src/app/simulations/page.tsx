@@ -168,7 +168,8 @@ export default function Simulations() {
               <div className='card flex-col gap-2'>
                 <Progress
                   value={
-                    (sim.totals.total_interest_paid / (sim.savings.interest_saved + sim.totals.total_interest_paid)) *
+                    (1 -
+                      sim.totals.total_interest_paid / (sim.savings.interest_saved + sim.totals.total_interest_paid)) *
                     100
                   }
                   className='h-1'
@@ -177,7 +178,9 @@ export default function Simulations() {
                   <span className='text-description'>interest reduction</span>
                   <span className='text-description'>
                     {(
-                      (sim.totals.total_interest_paid / (sim.savings.interest_saved + sim.totals.total_interest_paid)) *
+                      (1 -
+                        sim.totals.total_interest_paid /
+                          (sim.savings.interest_saved + sim.totals.total_interest_paid)) *
                       100
                     ).toFixed(1)}
                     % reduction

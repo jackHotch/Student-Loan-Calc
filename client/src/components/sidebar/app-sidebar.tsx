@@ -46,7 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className='data-[slot=sidebar-menu-button]:p-1.5! hover:bg-transparent'>
-              <Link href='/dashboard'>
+              <Link href='/loans'>
                 <Calculator className='size-5!' color='var(--primary)' />
                 <span className='font-semibold font-display text-xl'>Loan Tracker</span>
               </Link>

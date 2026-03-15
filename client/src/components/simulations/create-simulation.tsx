@@ -41,10 +41,16 @@ export function CreateSimulation() {
   const [currentSimulationComparison, setCurrentSimulationComparison] = useState<SimulationResult>()
   const [name, setName] = useState<string>('')
   const [description, setDescription] = useState<string>('')
-  const [selectedLoans, setSelectedLoans] = useState<Set<bigint>>(new Set(loans?.map((l) => l.id)))
+  const [selectedLoans, setSelectedLoans] = useState<Set<bigint>>(new Set())
   const [strategyType, setStrategyType] = useState<StrategyType>(StrategyType.AVALANCHE)
   const [extraPayments, setExtraPayments] = useState<ExtraPayment[]>([{ amount: 100, start_date: new Date() }])
   const [cascade, setCascade] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (loans && !existingSimulation && !simulationId) {
+      setSelectedLoans(new Set(loans.map((l) => l.id)))
+    }
+  }, [loans])
 
   useEffect(() => {
     if (loans && existingSimulation && simulationComparison) {
@@ -143,7 +149,7 @@ export function CreateSimulation() {
           strategy_type: strategyType,
           extra_payments: extraPayments,
           cascade,
-          loan_ids: Array.from(selectedLoans).map(Number),
+          loan_ids: [...new Set(Array.from(selectedLoans).map(Number))],
         },
       })
     } else {
@@ -153,7 +159,7 @@ export function CreateSimulation() {
         strategy_type: strategyType,
         extra_payments: extraPayments,
         cascade,
-        loan_ids: Array.from(selectedLoans).map(Number),
+        loan_ids: [...new Set(Array.from(selectedLoans).map(Number))],
       })
     }
 
@@ -180,7 +186,7 @@ export function CreateSimulation() {
       <div className='p-8 flex flex-col border-r gap-12' style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
         <header className='flex flex-col gap-4'>
           <p className='text-label'>
-            {activeSimulation.active_simulation_id == simulationId && (
+            {activeSimulation?.active_simulation_id == simulationId && (
               <span>
                 <Badge>Active</Badge> -
               </span>
