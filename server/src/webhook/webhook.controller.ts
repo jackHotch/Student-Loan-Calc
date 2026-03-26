@@ -25,10 +25,13 @@ export class WebhookController {
       switch (event.type) {
         case 'user.updated':
           await this.usersService.updateUser(event.data);
+          break;
         case 'user.created':
           await this.usersService.createUser(event.data);
+          break;
         case 'user.deleted':
           await this.usersService.deleteUser(event.data);
+          break;
       }
 
       return { success: true };
