@@ -30,7 +30,7 @@ export function dbToTable(loan: LoanDb): LoanTable {
     minimum_payment: formatCurrency(loan.minimum_payment),
     extra_payment: formatCurrency(loan.extra_payment || 0),
     extra_payment_start_date: formatDate(loan.extra_payment_start_date),
-    start_date: formatDate(new Date(loan.start_date)),
+    start_date: formatDate(parseISODate(loan.start_date)),
     next_payment_date: getNextPaymentDate(loan.payment_day_of_month, loan.start_date),
     payoff_date: formatDate(loan.payoff_date),
     total_interest_paid: formatCurrency(loan.total_interest_paid),
@@ -57,6 +57,12 @@ export function formatDate(date: Date): string {
       year: 'numeric',
     })
   }
+}
+
+function parseISODate(isoString: string): Date {
+  if (!isoString) return null
+  const [year, month, day] = isoString.split('T')[0].split('-').map(Number)
+  return new Date(year, month - 1, day)
 }
 
 function getNextPaymentDate(dayOfMonth: number, startDate: string): string {
