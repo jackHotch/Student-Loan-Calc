@@ -66,15 +66,10 @@ export class SimulationsController {
 
   @Patch(':id')
   update(
-    @User() userId: BigInt,
     @Param('id') simulationId: string,
     @Body() simulation: CreateSimulationDto,
   ) {
-    return this.simulationsService.update(
-      userId,
-      BigInt(simulationId),
-      simulation,
-    );
+    return this.simulationsService.update(BigInt(simulationId), simulation);
   }
 
   @Delete(':id')

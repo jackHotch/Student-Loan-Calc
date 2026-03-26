@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateSimulationDto, StrategyType } from './dto/create-simulation.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { PaymentScheduleService } from 'src/payment-schedule/payment-schedule.service';
@@ -332,9 +332,9 @@ export class SimulationsService {
   }
 
   async update(
-    userId: BigInt,
     simulationId: BigInt,
     simulation: CreateSimulationDto,
+    forceRecalculation = false,
   ) {
     const existing = await this.db.query(
       `SELECT s.*, 
@@ -346,13 +346,16 @@ export class SimulationsService {
         ) AS extra_payments
       FROM simulations s
       JOIN simulation_loans sl ON sl.simulation_id = s.id
-      WHERE s.id = $1 AND s.user_id = $2
-      GROUP BY s.id`,
-      [simulationId, userId],
+      WHERE s.id = $1
+      GROUP BY s.id
+      `,
+      [simulationId],
     );
     const current = existing[0];
+    const userId = current.user_id;
 
     const needsRecalculation =
+      forceRecalculation ||
       current.strategy_type !== simulation.strategy_type ||
       current.cascade !== simulation.cascade ||
       !this.sameArrays(current.loan_ids, simulation.loan_ids) ||
@@ -998,5 +1001,31 @@ export class SimulationsService {
     );
 
     return result[0];
+  }
+
+  async getSimulationsByLoanIds(loanIds: BigInt[]) {
+    const placeholders = loanIds.map((_, i) => `$${i + 1}`).join(', ');
+    return this.db.query(
+      `SELECT 
+        s.id AS simulation_id,
+        s.name,
+        s.description,
+        s.strategy_type,
+        s.cascade,
+        array_agg(DISTINCT sl.loan_id) AS loan_ids,
+        COALESCE(
+          array_agg(DISTINCT jsonb_build_object(
+            'amount', sep.amount,
+            'start_date', sep.start_date
+          )) FILTER (WHERE sep.id IS NOT NULL),
+          '{}'
+        ) AS extra_payments
+    FROM simulations s
+    INNER JOIN simulation_loans sl ON sl.simulation_id = s.id
+    LEFT JOIN simulation_extra_payments sep ON sep.simulation_id = s.id
+    WHERE sl.loan_id IN (${placeholders})
+    GROUP BY s.id`,
+      loanIds,
+    );
   }
 }

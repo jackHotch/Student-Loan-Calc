@@ -10,6 +10,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ClerkUserInterceptor } from './auth/clerk-user.interceptor';
 import { PaymentScheduleModule } from './payment-schedule/payment-schedule.module';
 import { SimulationsModule } from './simulations/simulations.module';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SimulationsModule } from './simulations/simulations.module';
     LoansModule,
     PaymentScheduleModule,
     SimulationsModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [

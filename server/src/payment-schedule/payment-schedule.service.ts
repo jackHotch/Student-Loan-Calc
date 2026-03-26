@@ -99,10 +99,6 @@ export class PaymentScheduleService {
       this.calculatePaymentSchedule(paymentScheduleInput);
 
     await this.saveSchedule(loan.id, 'loan', schedule);
-
-    await this.processAllPendingPayments(loan.id);
-
-    return await this.getSchedules(loan.id, 'loan');
   }
 
   async getLastActualPayment(loanId: BigInt): Promise<any> {
@@ -177,10 +173,6 @@ export class PaymentScheduleService {
     );
 
     await this.saveSchedule(loan.id, 'loan', schedules);
-
-    await this.processAllPendingPayments(loan.id);
-
-    return this.getSchedules(loan.id, 'loan');
   }
 
   async saveSchedule(
@@ -250,7 +242,7 @@ export class PaymentScheduleService {
     );
   }
 
-  async processAllPendingPayments(loanId?: BigInt) {
+  async markPaymentsAsActual(loanId?: BigInt) {
     const today = new Date();
     let loanIdCondition = ``;
     let values: any[] = [today];
@@ -260,15 +252,14 @@ export class PaymentScheduleService {
       values.push(loanId);
     }
 
-    await this.db.query(
-      `
-      UPDATE payment_schedules
+    return this.db.query(
+      `UPDATE payment_schedules
       SET is_actual = TRUE
       WHERE is_actual = FALSE
+      AND loan_id IS NOT NULL
       AND payment_date <= $1
       ${loanIdCondition}
-      RETURNING *
-      `,
+      RETURNING *`,
       values,
     );
   }

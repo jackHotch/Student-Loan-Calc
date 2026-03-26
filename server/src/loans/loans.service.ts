@@ -5,12 +5,14 @@ import { DatabaseService } from '../database/database.service';
 import { PaymentScheduleService } from 'src/payment-schedule/payment-schedule.service';
 import { LoanDb } from 'src/lib/types/loan.types';
 import Decimal from 'decimal.js';
+import { CronService } from 'src/cron/cron.service';
 
 @Injectable()
 export class LoansService {
   constructor(
     private db: DatabaseService,
     private paymentSchedules: PaymentScheduleService,
+    private cronService: CronService,
   ) {}
 
   async create(userId: BigInt, loan: CreateLoanDto) {
@@ -36,10 +38,14 @@ export class LoansService {
 
     const createdLoan = result[0] as LoanDb;
 
-    const createdSchedule =
-      await this.paymentSchedules.generateScheduleForNewLoan(createdLoan);
+    await this.paymentSchedules.generateScheduleForNewLoan(createdLoan);
+    await this.cronService.processAllPendingPayments(createdLoan.id);
 
     const finalLoan = await this.findOne(userId, createdLoan.id);
+    const createdSchedule = await this.paymentSchedules.getSchedules(
+      createdLoan.id,
+      'loan',
+    );
 
     return {
       loan: finalLoan,
@@ -309,11 +315,14 @@ export class LoansService {
     let schedule;
 
     if (needsRecalculation) {
-      schedule =
-        await this.paymentSchedules.generateScheduleForExistingLoan(
-          updatedLoan,
-        );
+      await this.paymentSchedules.generateScheduleForExistingLoan(updatedLoan);
+      await this.cronService.processAllPendingPayments(updatedLoan.id);
+
       updatedLoan = await this.findOne(userId, updatedLoan.id);
+      schedule = await this.paymentSchedules.getSchedules(
+        updatedLoan.id,
+        'loan',
+      );
     } else {
       schedule = this.paymentSchedules.getSchedules(updatedLoan.id, 'loan');
     }
