@@ -28,7 +28,9 @@ export class UsersService {
   }
 
   async createUser(data) {
-    return await this.db.query(
+    console.log('webhook hit');
+    console.log('data', data);
+    const result = await this.db.query(
       `
       INSERT INTO users (clerk_id, first_name, last_name, email)
       VALUES ($1, $2, $3, $4)
@@ -41,6 +43,8 @@ export class UsersService {
         data.email_addresses[0].email_address,
       ],
     );
+
+    console.log('result', result);
   }
 
   async updateUser(data) {
