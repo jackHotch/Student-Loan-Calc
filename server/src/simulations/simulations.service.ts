@@ -68,7 +68,9 @@ export class SimulationsService {
       payoffOrder.map(async (l) => {
         const lastActualPayment: any =
           await this.paymentSchedules.getLastActualPayment(l.id);
-        const simulationStartDate = new Date(lastActualPayment.payment_date);
+        const simulationStartDate = new Date(
+          lastActualPayment ? lastActualPayment.payment_date : l.start_date,
+        );
 
         return {
           ...l,
@@ -76,7 +78,9 @@ export class SimulationsService {
           payoffOrder: -1,
           extraPaymentTarget: false,
           simulationStartdate: simulationStartDate,
-          lastActualPaymentNumber: lastActualPayment.payment_number,
+          lastActualPaymentNumber: lastActualPayment
+            ? lastActualPayment.payment_number
+            : 0,
           schedule: new Array(),
         };
       }),
@@ -430,6 +434,7 @@ export class SimulationsService {
     a: { amount: number; start_date: Date }[],
     b: { amount: number; start_date: Date }[],
   ): boolean {
+    if (!a || !b) return a === b;
     if (a.length !== b.length) return false;
     const sort = (arr) =>
       [...arr].sort(

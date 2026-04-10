@@ -44,7 +44,8 @@ export function CreateSimulation() {
   const [description, setDescription] = useState<string>('')
   const [selectedLoans, setSelectedLoans] = useState<Set<bigint>>(new Set())
   const [strategyType, setStrategyType] = useState<StrategyType>(StrategyType.AVALANCHE)
-  const [extraPayments, setExtraPayments] = useState<ExtraPayment[]>([{ amount: 100, start_date: new Date() }])
+  // const [extraPayments, setExtraPayments] = useState<ExtraPayment[]>([{ amount: 100, start_date: new Date() }])
+  const [extraPayments, setExtraPayments] = useState<ExtraPayment[]>([])
   const [cascade, setCascade] = useState<boolean>(false)
 
   useEffect(() => {
@@ -76,10 +77,10 @@ export function CreateSimulation() {
     setDescription(existingSimulation.description)
     setStrategyType(existingSimulation.strategy_type)
     setExtraPayments(
-      existingSimulation.extra_payments.map((ep) => ({
+      existingSimulation.extra_payments?.map((ep) => ({
         ...ep,
         start_date: new Date(ep.start_date),
-      })),
+      })) ?? [],
     )
     setCascade(existingSimulation.cascade)
     setSelectedLoans(new Set(existingSimulation.loans.map((l) => BigInt(l.loan_id))))
@@ -91,9 +92,12 @@ export function CreateSimulation() {
   }
 
   function sameExtraPayments(a: ExtraPayment[], b: ExtraPayment[]) {
-    if (a.length !== b.length) return false
-    return a.every(
-      (ep, i) => ep.amount === b[i].amount && new Date(ep.start_date).getTime() === new Date(b[i].start_date).getTime(),
+    const normA = a ?? []
+    const normB = b ?? []
+    if (normA.length !== normB.length) return false
+    return normA.every(
+      (ep, i) =>
+        ep.amount === normB[i].amount && new Date(ep.start_date).getTime() === new Date(normB[i].start_date).getTime(),
     )
   }
 
