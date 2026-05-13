@@ -359,4 +359,135 @@ export class LoansService {
       [loanId, userId],
     );
   }
+
+  async getProgress(userId: BigInt, loanIds?: number[]) {
+    const filterByIds = loanIds && loanIds.length > 0;
+    const params = filterByIds ? [loanIds, userId] : [userId];
+    const userParam = filterByIds ? '$2' : '$1';
+    const idFilter = filterByIds ? 'AND l.id = ANY($1)' : '';
+
+    const perLoanRows = await this.db.query(
+      `SELECT
+        l.id AS loan_id,
+        l.name,
+        l.starting_principal,
+        COALESCE(SUM(ps.principal_paid) FILTER (WHERE ps.is_actual = true), 0) AS total_principal_paid,
+        COALESCE(SUM(ps.interest_paid) FILTER (WHERE ps.is_actual = true), 0) AS total_interest_paid,
+        COALESCE(SUM(ps.total_payment) FILTER (WHERE ps.is_actual = true), 0) AS total_paid,
+        COALESCE(last_actual.remaining_principal, l.starting_principal) AS current_principal,
+        last_schedule.payment_date AS payoff_date
+      FROM loans l
+      LEFT JOIN payment_schedules ps ON l.id = ps.loan_id AND ps.simulation_loan_id IS NULL
+      LEFT JOIN LATERAL (
+        SELECT remaining_principal
+        FROM payment_schedules
+        WHERE loan_id = l.id AND is_actual = true AND simulation_loan_id IS NULL
+        ORDER BY payment_number DESC LIMIT 1
+      ) last_actual ON true
+      LEFT JOIN LATERAL (
+        SELECT payment_date
+        FROM payment_schedules
+        WHERE loan_id = l.id AND simulation_loan_id IS NULL
+        ORDER BY payment_number DESC LIMIT 1
+      ) last_schedule ON true
+      WHERE l.user_id = ${userParam} ${idFilter}
+      GROUP BY l.id, l.name, l.starting_principal, last_actual.remaining_principal, last_schedule.payment_date`,
+      params,
+    );
+
+    const monthlyRows = await this.db.query(
+      `SELECT
+        COALESCE(SUM(curr.remaining_principal), 0) AS current_remaining,
+        COALESCE(SUM(prev.remaining_principal), 0) AS prev_month_remaining
+      FROM loans l
+      LEFT JOIN LATERAL (
+        SELECT remaining_principal, payment_date
+        FROM payment_schedules
+        WHERE loan_id = l.id AND is_actual = true AND simulation_loan_id IS NULL
+        ORDER BY payment_number DESC LIMIT 1
+      ) curr ON true
+      LEFT JOIN LATERAL (
+        SELECT remaining_principal
+        FROM payment_schedules
+        WHERE loan_id = l.id AND is_actual = true AND simulation_loan_id IS NULL
+          AND DATE_TRUNC('month', payment_date) = DATE_TRUNC('month', curr.payment_date - INTERVAL '1 month')
+        ORDER BY payment_number DESC LIMIT 1
+      ) prev ON true
+      WHERE l.user_id = ${userParam} ${idFilter}`,
+      params,
+    );
+
+    const now = new Date();
+
+    const perLoan = perLoanRows.map((row) => {
+      const payoffDate = row.payoff_date ? new Date(row.payoff_date) : null;
+      const monthsToPayoff = payoffDate
+        ? (payoffDate.getFullYear() - now.getFullYear()) * 12 +
+          (payoffDate.getMonth() - now.getMonth())
+        : null;
+
+      return {
+        loan_id: row.loan_id,
+        name: row.name,
+        starting_principal: new Decimal(row.starting_principal)
+          .toDecimalPlaces(2)
+          .toNumber(),
+        current_principal: new Decimal(row.current_principal)
+          .toDecimalPlaces(2)
+          .toNumber(),
+        total_principal_paid: new Decimal(row.total_principal_paid)
+          .toDecimalPlaces(2)
+          .toNumber(),
+        total_interest_paid: new Decimal(row.total_interest_paid)
+          .toDecimalPlaces(2)
+          .toNumber(),
+        total_paid: new Decimal(row.total_paid).toDecimalPlaces(2).toNumber(),
+        payoff_date: row.payoff_date,
+        months_to_payoff: monthsToPayoff,
+        is_active: new Decimal(row.current_principal).greaterThan(0.01),
+      };
+    });
+
+    const totalPaid = perLoan.reduce(
+      (sum, l) => new Decimal(sum).plus(l.total_paid).toDecimalPlaces(2).toNumber(),
+      0,
+    );
+    const totalRemaining = perLoan.reduce(
+      (sum, l) => new Decimal(sum).plus(l.current_principal).toDecimalPlaces(2).toNumber(),
+      0,
+    );
+    const activeLoans = perLoan.filter((l) => l.is_active).length;
+    const latestPayoffDate = perLoan.reduce<Date | null>(
+      (latest, l) =>
+        !latest || (l.payoff_date && new Date(l.payoff_date) > latest)
+          ? l.payoff_date
+            ? new Date(l.payoff_date)
+            : latest
+          : latest,
+      null,
+    );
+    const monthsToPayoff = latestPayoffDate
+      ? (latestPayoffDate.getFullYear() - now.getFullYear()) * 12 +
+        (latestPayoffDate.getMonth() - now.getMonth())
+      : null;
+
+    const monthly = monthlyRows[0] ?? { current_remaining: 0, prev_month_remaining: 0 };
+    const prevRemaining = new Decimal(monthly.prev_month_remaining);
+    const currRemaining = new Decimal(monthly.current_remaining);
+    const monthlyPctChange = prevRemaining.greaterThan(0)
+      ? currRemaining.minus(prevRemaining).dividedBy(prevRemaining).times(100).toDecimalPlaces(2).toNumber()
+      : null;
+
+    return {
+      summary: {
+        total_paid: new Decimal(totalPaid).toDecimalPlaces(2).toNumber(),
+        total_remaining: new Decimal(totalRemaining).toDecimalPlaces(2).toNumber(),
+        active_loans: activeLoans,
+        payoff_date: latestPayoffDate,
+        months_to_payoff: monthsToPayoff,
+        monthly_pct_change: monthlyPctChange,
+      },
+      per_loan: perLoan,
+    };
+  }
 }
