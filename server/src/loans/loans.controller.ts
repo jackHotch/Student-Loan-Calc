@@ -29,9 +29,14 @@ export class LoansController {
     return this.loansService.findAll(userId);
   }
 
-  @Post('/summary')
+  @Get('/summary')
   summary(@User() userId: BigInt, @Body() body?: { loan_ids?: number[] }) {
     return this.loansService.getBaselineSummary(userId, body?.loan_ids);
+  }
+
+  @Get('/progress')
+  getProgress(@User() userId: BigInt, @Body() body?: { loan_ids?: number[] }) {
+    return this.loansService.getProgress(userId, body?.loan_ids);
   }
 
   @Get(':id')
